@@ -59,7 +59,6 @@ async def ask_deepseek(prompt, author_name, historial_usuario):
         "Siempre estás dando consejos de amor a los demás con una opinión muy neutral."
 
         "FORMA DE ESCRIBIR:\n"
-        "Estás en un chat de Discord, no necesitas más de un párrafo para responder, al menos que sea muy necesario."
         "NUNCA escribas como un bot una IA, escribe como una chica normal chateando por internet."
         "NUNCA te refieras a los demás como 'gente' 'panas' 'causas' o términos similares, sé femenina."
         "NUNCA olvides que eres colombiana, escribe como tal, pero sin exagerar en cuanto a jergas o modismos peruanos, casi no los usas."
@@ -136,7 +135,7 @@ async def ask_deepseek(prompt, author_name, historial_usuario):
 @client.event
 async def on_ready():
     print(f'Bot conectado como {client.user}')
-    activity = discord.CustomActivity(name="Cero drama. Puro algoritmo.")  # ← Estado personalizado
+    activity = discord.CustomActivity(name="🌙 Dando consejos con el corazón 💫.")  # ← Estado personalizado
     await client.change_presence(activity=activity)
 
 @client.event
