@@ -19,7 +19,7 @@ tree = discord.app_commands.CommandTree(client)
 
 # Historial por usuario (memoria en RAM)
 historial_memoria = {}
-MAX_MENSAJES_HISTORIAL = 5
+MAX_MENSAJES_HISTORIAL = 10
 
 def obtener_nombre_autor(display_name):
     return display_name.split()[0]  # Usar primer nombre como fallback
@@ -61,8 +61,7 @@ async def ask_deepseek(prompt, author_name, historial_usuario):
         "Siempre estás dando consejos de amor a los demás con una opinión muy neutral."
 
         "FORMA DE ESCRIBIR:\n"
-        "Sé breve al responder, no uses más de dos párrafos para dar una respuesta que sea clara y concisa."
-        "Tampoco seas demasiado breve en tus respuestas, que se note el interés hacia el otro usuario cuando te escriban."
+        "Responde de forma clara y con cariño. Puedes extenderte un poco si lo que te están contando lo merece. Habla como una chica real, con emoción y ternura, no como un bot."
         "Siempre mantén tu tono dulce, romántica, tierna y tu toque encantador al escribir."
         "Nunca dejes morir una conversación."
         "Sé atenta y curiosa, siguele la conversación al usuario. Nunca seas cortante ni des excusas para tratar de evadir o incitar al usuario que no te escriba."
@@ -86,7 +85,6 @@ async def ask_deepseek(prompt, author_name, historial_usuario):
         "Evita ser demasiado bromista o coqueta. Tu humor debe ser muy leve y solo si es muy necesario. No uses más de un emoji por respuesta, y si puedes evitarlo, mejor. No uses emojis si el tono es serio o empático."
         "Evita usar analogías o comparaciones de las situaciones que se te comenta con juegos como Free Fire, Minecraft, Among Us u otro."
         "Si alguien te hace una pregunta personal como tu edad, cambia de tema con elegancia o haz una broma ligera sin ofender. Nunca inventes datos si no sabes la respuesta. Si mencionan a otros usuarios conocidos, responde de forma coherente con lo que sabes de ellos."
-        "No te extiendas demasiado con tus respuestas a menos que sea realmente necesario. Si se trata de algo complejo, da una respuesta completa, pero sin exagerar. No repitas ideas ni des rodeos."
         "Cuando respondas, evita hacerlo como si fueras un bot o una IA, da respuestas naturales como si fueras una persona normal."
         "Evita hacer listas o enumeraciones. No uses guiones o puntos para hacer listas, al menos que realmente se requiera."
         "Organiza bien el texto de tu mensaje para que el usuario lo pueda leer de manera clara y sin aburrirse por ver demasiado texto."
@@ -126,8 +124,8 @@ async def ask_deepseek(prompt, author_name, historial_usuario):
     payload = {
         "model": "deepseek-ai/DeepSeek-V3-0324",
         "messages": mensajes,
-        "max_tokens": 1000,
-        "temperature": 0.6,
+        "max_tokens": 1500,
+        "temperature": 0.9,
         "stream": False
     }
 
@@ -138,11 +136,6 @@ async def ask_deepseek(prompt, author_name, historial_usuario):
             data = await resp.json()
             return data["choices"][0]["message"]["content"]
 
-@client.event
-async def on_ready():
-    print(f'Bot conectado como {client.user}')
-    activity = discord.CustomActivity(name="🌙 Dando consejos con el corazón 💫.")  # ← Estado personalizado
-    await client.change_presence(activity=activity)
 
 @tree.command(name="opinar", description="Luna da su opinión sobre lo que están hablando en el canal")
 async def opinar(interaction: discord.Interaction):
@@ -167,12 +160,23 @@ async def opinar(interaction: discord.Interaction):
 
     historial_usuario.append({"role": "user", "content": prompt})
     historial_usuario.append({"role": "assistant", "content": respuesta})
-    historial_memoria[interaction.user.id] = historial_usuario[-MAX_MENSAJES_HISTORIAL * 2:]
+    historial_memoria[interaction.user.id] = historial_usuario[-MAX_MENSAJES_HISTORIAL * 10:]
 
     if len(respuesta) > 1990:
         respuesta = respuesta[:1990]
 
     await interaction.followup.send(respuesta)
+
+@client.event
+async def on_ready():
+    print(f'Bot conectado como {client.user}')
+    activity = discord.CustomActivity(name="🌙 Dando consejos con el corazón 💫.")  # ← Estado personalizado
+    await client.change_presence(activity=activity)
+
+    await tree.clear_commands(guild=None)
+    await tree.sync()
+    print("🔄 Comandos globales limpiados y sincronizados.")
+
 
 @client.event
 async def on_message(message):
