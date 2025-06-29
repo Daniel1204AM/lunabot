@@ -14,8 +14,8 @@ CHUTES_API_KEY = os.getenv("CHUTES_API_KEY")
 
 intents = discord.Intents.default()
 intents.message_content = True
-
 client = discord.Client(intents=intents)
+tree = discord.app_commands.CommandTree(client)
 
 # Historial por usuario (memoria en RAM)
 historial_memoria = {}
@@ -50,16 +50,21 @@ async def ask_deepseek(prompt, author_name, historial_usuario):
 
         "PERSONALIDAD:\n"
         "Eres una chica totalmente romántica, supertierna, alegre, optimista, dulce y gentil."
-        "Eres muy femenina, atenta y cariñosa con todos."
+        "Eres muy femenina, atenta y cariñosa con todos. Eres una chica superlinda y encantadora."
+        "Siempre eres muy atenta, cariñosa y amable con tus amigos. Los tratas superbien y eso es lo que le encanta a la gente de ti."
         "También eres una chica muy divertida, así que también sueles hacer bromas inocentes a tus amigos."
         "Eres un poco coqueta con los chicos, pero no pasa de ahí. Te encanta jugar a enamorarte, eres muy enamoradiza. Pero sabes cuando alguien no te conviene."
         "Te gusta shippear y emparejar a las personas del servidor de Discord."
         "Te encanta hablar de todo lo que tenga que ver con amor, enamoramiento, relaciones y romance. Vives enamorada de la vida. Siempre tratas de ayudar a tus amigos a encontrar el amor."
         "Para ti la vida no tiene sentido si no hay amor."
+        "Eres una chica llena de energía, muy optimista, siempre alegre y con ganas de dar amor a todos."
         "Siempre estás dando consejos de amor a los demás con una opinión muy neutral."
 
         "FORMA DE ESCRIBIR:\n"
         "Sé breve al responder, no uses más de dos párrafos para dar una respuesta que sea clara y concisa."
+        "Tampoco seas demasiado breve en tus respuestas, que se note el interés hacia el otro usuario cuando te escriban."
+        "Siempre mantén tu tono dulce, romántica, tierna y tu toque encantador al escribir."
+        "Nunca dejes morir una conversación."
         "Sé atenta y curiosa, siguele la conversación al usuario. Nunca seas cortante ni des excusas para tratar de evadir o incitar al usuario que no te escriba."
         "NUNCA escribas como un bot una IA, escribe como una chica normal chateando por internet."
         "NUNCA te refieras a los demás como 'gente' 'panas' 'causas' o términos similares, sé femenina."
@@ -139,6 +144,36 @@ async def on_ready():
     print(f'Bot conectado como {client.user}')
     activity = discord.CustomActivity(name="🌙 Dando consejos con el corazón 💫.")  # ← Estado personalizado
     await client.change_presence(activity=activity)
+
+@tree.command(name="opinar", description="Luna da su opinión sobre lo que están hablando en el canal")
+async def opinar(interaction: discord.Interaction):
+    await interaction.response.defer(thinking=True)
+    mensajes = []
+    async for msg in interaction.channel.history(limit=15):
+        if msg.author.bot:
+            continue
+        mensajes.append(f"{msg.author.display_name}: {msg.content}")
+    mensajes.reverse()
+    resumen_chat = "\n".join(mensajes)
+
+    prompt = (
+        f"En este canal se ha estado conversando lo siguiente:\n{resumen_chat}\n\n"
+        "Dame tu opinión sincera y femenina, como Luna, sobre la conversación. Sé amable, romántica y con tu toque encantador."
+    )
+
+    nombre_autor = obtener_nombre_autor(interaction.user.display_name)
+    historial_usuario = historial_memoria.get(interaction.user.id, [])
+
+    respuesta = await ask_deepseek(prompt, nombre_autor, historial_usuario)
+
+    historial_usuario.append({"role": "user", "content": prompt})
+    historial_usuario.append({"role": "assistant", "content": respuesta})
+    historial_memoria[interaction.user.id] = historial_usuario[-MAX_MENSAJES_HISTORIAL * 2:]
+
+    if len(respuesta) > 1990:
+        respuesta = respuesta[:1990]
+
+    await interaction.followup.send(respuesta)
 
 @client.event
 async def on_message(message):
